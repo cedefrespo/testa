@@ -245,6 +245,12 @@ The generator includes templates for:
    npm install -g .
    ```
 
+## Links
+
+- GitHub Repository: [https://github.com/cedefrespo/testa](https://github.com/cedefrespo/testa)
+- Report an issue: [https://github.com/cedefrespo/testa/issues](https://github.com/cedefrespo/testa/issues)
+- npm package: [@fedecrespo/testa](https://www.npmjs.com/package/@fedecrespo/testa)
+
 ## License
 
 ISC 

@@ -6,6 +6,14 @@
   "bin": {
     "testa": "./dist/index.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cedefrespo/testa.git"
+  },
+  "homepage": "https://github.com/cedefrespo/testa#readme",
+  "bugs": {
+    "url": "https://github.com/cedefrespo/testa/issues"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",

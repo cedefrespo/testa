@@ -6,11 +6,6 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import { execSync } from 'child_process';
 import * as analyzer from './analyzer';
-import { 
-  generateApiTestForMethod, 
-  generateApiErrorTestForMethod, 
-  generateGenericUITest 
-} from './analyzer';
 
 const program = new Command();
 
@@ -1716,6 +1711,264 @@ function findFiles(dir: string, extensions: string[]): string[] {
   }
   
   return result;
+}
+
+// Function to run tests
+function runTests(testPattern: string | undefined, options: any) {
+  // Determine the base command based on the detected framework
+  let cmd = '';
+  
+  if (fs.existsSync(path.join(process.cwd(), 'playwright.config.ts')) || 
+      fs.existsSync(path.join(process.cwd(), 'playwright.config.js'))) {
+    cmd = `npx playwright test`;
+  } else if (fs.existsSync(path.join(process.cwd(), 'cypress.json')) || 
+             fs.existsSync(path.join(process.cwd(), 'cypress.config.js'))) {
+    cmd = `npx cypress run`;
+  } else if (fs.existsSync(path.join(process.cwd(), 'jest.config.js'))) {
+    cmd = `npx jest`;
+  } else {
+    console.error('❌ No compatible test framework detected.');
+    process.exit(1);
+  }
+  
+  // Add the test pattern if specified
+  if (testPattern) {
+    cmd += ` ${testPattern}`;
+  }
+  
+  // Configure environment
+  const envVars: {[key: string]: string} = {
+    'TEST_ENV': options.env
+  };
+  
+  // Configure specific browser (for Playwright)
+  if (cmd.includes('playwright') && options.browser) {
+    cmd += ` --project=${options.browser}`;
+  }
+  
+  // Run command
+  console.log(`Running: ${cmd}`);
+  try {
+    execSync(cmd, { 
+      stdio: 'inherit',
+      env: { ...process.env, ...envVars }
+    });
+    console.log('✅ Tests completed successfully');
+  } catch (error) {
+    console.error('❌ Some tests have failed');
+    process.exit(1);
+  }
+}
+
+// Function to get all files in a directory recursively
+function getAllFiles(dir: string): string[] {
+  const files: string[] = [];
+  
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...getAllFiles(fullPath));
+    } else {
+      files.push(fullPath);
+    }
+  }
+  
+  return files;
+}
+
+// Function to create basic files for a project
+function createBasicFiles(projectPath: string, options: any) {
+  // Create package.json
+  const packageJson = {
+    name: path.basename(projectPath),
+    version: '1.0.0',
+    description: 'Test automation project',
+    main: 'index.js',
+    scripts: {
+      test: options.framework === 'playwright' ? 'playwright test' : 
+            options.framework === 'cypress' ? 'cypress run' : 'jest',
+      build: options.useTypescript ? 'tsc' : 'echo "No build step"'
+    },
+    keywords: ['testing', 'automation'],
+    author: '',
+    license: 'ISC'
+  };
+  
+  fs.writeFileSync(
+    path.join(projectPath, 'package.json'),
+    JSON.stringify(packageJson, null, 2)
+  );
+  
+  // Create README.md
+  const readme = `# ${path.basename(projectPath)}
+
+Test automation project for ${path.basename(projectPath)}, generated with testa.
+
+## Main Features
+
+- Framework: ${options.framework}
+- Project type: ${options.type}
+- TypeScript support: ${options.useTypescript ? 'Yes' : 'No'}
+- Base URL: ${options.baseUrl}
+- API URL: ${options.apiUrl}
+
+## Requirements
+
+- Node.js 14+
+- npm or yarn
+- Access to the application at ${options.baseUrl}
+
+## Installation
+
+1. Install dependencies:
+\`\`\`
+npm install
+\`\`\`
+
+2. ${options.framework === 'playwright' ? 'Install browsers for Playwright:\n```\nnpm run install:browsers\n```' : ''}
+
+## Running Tests
+
+\`\`\`
+npm test
+\`\`\`
+
+## Project Structure
+
+\`\`\`
+${path.basename(projectPath)}/
+├── src/               # Source code
+│   ├── api/           # API test utilities
+│   ├── config/        # Environment configuration
+│   ├── e2e/           # End-to-end tests
+│   ├── models/        # Data models for tests
+│   └── utils/         # Helper functions
+├── ${options.framework === 'playwright' ? 'playwright.config.ts' : options.framework === 'cypress' ? 'cypress.json' : 'jest.config.js'} # Configuration
+└── package.json       # Dependencies and scripts
+\`\`\`
+
+## Testa Commands
+
+To manage your tests, you can use the following testa commands:
+
+\`\`\`
+# Generate a new test
+testa generate api auth-test
+testa generate e2e login-flow
+
+# Run tests
+testa run
+testa run --env staging
+testa run --browser firefox
+
+# See more commands
+testa help
+\`\`\`
+
+## Extension and Customization
+
+This project is a starting point. You can customize and extend the tests by adding new files to the corresponding structure.
+
+## Links
+
+- GitHub Repository: [https://github.com/cedefrespo/testa](https://github.com/cedefrespo/testa)
+- Report an issue: [https://github.com/cedefrespo/testa/issues](https://github.com/cedefrespo/testa/issues)
+- npm package: [@fedecrespo/testa](https://www.npmjs.com/package/@fedecrespo/testa)
+
+## License
+
+ISC
+`;
+  
+  fs.writeFileSync(path.join(projectPath, 'README.md'), readme);
+  
+  // Create config files
+  if (options.useTypescript) {
+    const tsConfig = {
+      compilerOptions: {
+        target: 'ES2020',
+        module: 'commonjs',
+        strict: true,
+        esModuleInterop: true,
+        skipLibCheck: true,
+        forceConsistentCasingInFileNames: true,
+        outDir: './dist',
+        rootDir: './src'
+      },
+      include: ['src/**/*'],
+      exclude: ['node_modules']
+    };
+    
+    fs.writeFileSync(
+      path.join(projectPath, 'tsconfig.json'),
+      JSON.stringify(tsConfig, null, 2)
+    );
+  }
+  
+  // Create framework specific files
+  if (options.framework === 'playwright') {
+    const playwrightConfig = `
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  testDir: './src/e2e',
+  timeout: 30000,
+  use: {
+    baseURL: '${options.baseUrl}',
+    headless: true,
+    viewport: { width: 1280, height: 720 },
+    screenshot: 'only-on-failure'
+  }
+};
+
+export default config;
+`;
+    
+    fs.writeFileSync(
+      path.join(projectPath, 'playwright.config.ts'),
+      playwrightConfig
+    );
+    
+    // Create a sample test
+    const sampleTest = `
+import { test, expect } from '@playwright/test';
+
+test('basic test', async ({ page }) => {
+  await page.goto('/');
+  expect(await page.title()).not.toBe('');
+});
+`;
+    
+    fs.writeFileSync(
+      path.join(projectPath, 'src/e2e/basic.spec.ts'),
+      sampleTest
+    );
+  }
+  
+  // Create .env file
+  const envContent = `# Test Environment (local, staging, production)
+TEST_ENV=local
+
+# Admin Credentials
+ADMIN_EMAIL=${options.adminEmail || 'admin@example.com'}
+ADMIN_PASSWORD=${options.adminPassword || 'admin_password'}
+
+# User Credentials
+USER_EMAIL=${options.userEmail || 'user@example.com'}
+USER_PASSWORD=${options.userPassword || 'user_password'}
+
+# Base URLs
+BASE_URL=${options.baseUrl}
+API_URL=${options.apiUrl}
+
+# Debug options (uncomment to enable)
+# HEADLESS=false
+# SLOWMO=100
+`;
+
+  fs.writeFileSync(path.join(projectPath, '.env'), envContent);
 }
 
 program.parse(process.argv); 
