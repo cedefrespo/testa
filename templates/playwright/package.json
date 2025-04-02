@@ -1,0 +1,31 @@
+{
+  "name": "{{projectName}}",
+  "version": "1.0.0",
+  "description": "Automated tests for {{projectName}}",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:auth": "npx playwright test auth.spec.ts",
+    "test:api": "npx playwright test api/",
+    "test:ui": "npx playwright test ui/",
+    "test:chrome": "npx playwright test --project=chromium",
+    "test:firefox": "npx playwright test --project=firefox",
+    "test:safari": "npx playwright test --project=webkit", 
+    "test:mobile": "npx playwright test --project=mobile-chrome --project=mobile-safari",
+    "test:staging": "TEST_ENV=staging npx playwright test",
+    "test:prod": "TEST_ENV=production npx playwright test",
+    "report": "npx playwright show-report",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "install:browsers": "npx playwright install"
+  },
+  "keywords": [
+    "test",
+    "automation",
+    "e2e",
+    "playwright"
+  ],
+  "author": "",
+  "license": "ISC"
+} 

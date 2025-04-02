@@ -1,0 +1,37 @@
+{
+  "name": "@fedecrespo/testa",
+  "version": "1.1.0",
+  "description": "CLI tool for creating and managing test automation projects",
+  "main": "dist/index.js",
+  "bin": {
+    "testa": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "generate": "ts-node src/index.ts create",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "test",
+    "automation",
+    "generator",
+    "cli",
+    "testa"
+  ],
+  "author": "Federico Crespo <federicocrespo@example.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^20.12.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "commander": "^11.1.0",
+    "fs-extra": "^11.2.0",
+    "inquirer": "^8.2.6"
+  }
+}
